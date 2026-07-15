@@ -1,218 +1,254 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[codz]
-*$py.class
+import math
+import numpy as np
+import matplotlib.pyplot as plt 
+def Calculos(w, e, ef, wf):
+    a = w * e
+    af = wf * ef
+    ey = (w - wf) / w
+    ez = (e - ef) / e
+    eyr = math.log(ey + 1)
+    ezr = math.log( ez+ 1)
+    return (a, af, ey, ez, eyr, ezr)
+def Calculoc(d1,d2,w, e, ef, wf):
+    a = (math.pi(d1) ^2)/4
+    af =(math.pi(d2) ^2)/4
+    ey = (w - wf) / w
+    ez = (e - ef) / e
+    eyr = math.log(ey + 1)
+    ezr = math.log( ez+ 1)
+    return (a, af, ey, ez, eyr, ezr)
+def DeformacionUIn(delta, lc):
+    Defu = [value / lc for value in delta]
+    return Defu
 
-# C extensions
-*.so
+def DeformacionUReal(defu):
+    Defur = [math.log(value + 1) for value in defu]
+    return Defur
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+def EsfuerzoI(fuerza, a):
+    Esfi = [value / a for value in fuerza]
+    return Esfi
 
-# PyInstaller
-#   Usually these files are written by a python script from a template
-#   before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+def EsfuerzoR(Esfi, defu):
+    Esfr = []
+    for es, def_u in zip(Esfi, defu):
+        aux = es * (def_u + 1)
+        Esfr.append(aux)
+    return Esfr
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+def Energia(Esr, defu):
+    En = []
+    for i in range(len(Esr)):
+        if defu[i] > 0:
+            aux = (Esr[i] + Esr[i - 1]) * (defu[i] - defu[i - 1]) * .5
+            En.append(aux)
+    return En
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py.cover
-.hypothesis/
-.pytest_cache/
-cover/
+def LimA(En):
+    return En[-1] * 0.02
 
-# Translations
-*.mo
-*.pot
+def Pearson(Dur, Ef, En, en):
+    idx = min(range(len(Dur)), key=lambda i: abs(Dur[i] - en))
 
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
+    if idx == 0:
+        Dur_prev = []
+        Ef_prev = []
+    else:
+        Dur_prev = Dur[:idx]
+        Ef_prev = Ef[:idx]
 
-# Flask stuff:
-instance/
-.webassets-cache
+    return Dur_prev, Ef_prev, idx
 
-# Scrapy stuff:
-.scrapy
+def Imp(Lis):
+    for value in Lis:
+        print("{:.8f}".format(value))
 
-# Sphinx documentation
-docs/_build/
+def Modulo(L1, L2):
+    n = len(L1)
 
-# PyBuilder
-.pybuilder/
-target/
+    sumx = sum(L1)
+    sumy = sum(L2)
+    sumxy = sum([x * y for x, y in zip(L1, L2)])
+    sumx2 = sum([x ** 2 for x in L1])
 
-# Jupyter Notebook
-.ipynb_checkpoints
+    E = (sumxy - (sumx * sumy) / n) / (sumx2 - (sumx ** 2) / n)
+    b = (sumy / n) - E * (sumx / n)
 
-# IPython
-profile_default/
-ipython_config.py
+    Sigma = [E * x + b for x in L1]
 
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
+    cov_sum = 0
+    std_dev_sum_L1 = 0
+    std_dev_sum_L2 = 0
 
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-# Pipfile.lock
+    for x, y in zip(L1, L2):
+        cov_sum += (x - sumx / n) * (y - sumy / n)
+        std_dev_sum_L1 += (x - sumx / n) ** 2
+        std_dev_sum_L2 += (y - sumy / n) ** 2
 
-# UV
-#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-# uv.lock
+    cov_promedio = cov_sum / (n - 1)
+    std_dev_promedio_L1 = (std_dev_sum_L1 / (n - 1)) ** 0.5
+    std_dev_promedio_L2 = (std_dev_sum_L2 / (n - 1)) ** 0.5
+    R2 = cov_promedio / (std_dev_promedio_L1 * std_dev_promedio_L2)
 
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-# poetry.lock
-# poetry.toml
+    return E, b, R2, Sigma
 
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#   pdm recommends including project-wide configuration in pdm.toml, but excluding .pdm-python.
-#   https://pdm-project.org/en/latest/usage/project/#working-with-version-control
-# pdm.lock
-# pdm.toml
-.pdm-python
-.pdm-build/
+def Calculos_varios(En, id):
+    r = 0
+    t = 0
+    for i in range(id-1):
+        r += En[i]
+    for i in range(len(En)):
+        t += En[i]
+    return (r * 1000), (t * 1000)
 
-# pixi
-#   Similar to Pipfile.lock, it is generally recommended to include pixi.lock in version control.
-# pixi.lock
-#   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
-#   in the .venv directory. It is recommended not to include this directory in version control.
-.pixi
+Fuerza = []
+Delta = []
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
+with open('Datos_Probeta.txt', 'r') as file:
+    fuerza_section = False
+    delta_section = False
+    fuerza_lines = []
+    delta_lines = []
+    for line in file:
+        if line.strip() == 'Fuerza':
+            fuerza_section = True
+            delta_section = False
+            continue
+        elif line.strip() == 'Delta':
+            delta_section = True
+            fuerza_section = False
+            continue
+        parts = line.split(':')
+        if len(parts) == 2:
+            var_name = parts[0].strip()
+            value = parts[1].strip()
+            try:
+                value = float(value)
+            except ValueError:
+                continue
 
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
+        if fuerza_section:
+            fuerza_lines.append(line.strip())
+        elif delta_section:
+            delta_lines.append(line.strip())
 
-# Redis
-*.rdb
-*.aof
-*.pid
+for line in fuerza_lines:
+    try:
+        value = float(line)
+        Fuerza.append(value)
+    except ValueError:
+        continue
 
-# RabbitMQ
-mnesia/
-rabbitmq/
-rabbitmq-data/
+for line in delta_lines:
+    try:
+        value = float(line)
+        Delta.append(value)
+    except ValueError:
+        continue
 
-# ActiveMQ
-activemq-data/
 
-# SageMath parsed files
-*.sage.py
 
-# Environments
-.env
-.envrc
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+m = {1: 'Probeta Rectangular', 2: 'Probeta Circular'}
 
-# Spyder project settings
-.spyderproject
-.spyproject
+print("Seleccione el tipo de probeta:")
+for key, value in m.items():
+    print(f"{key}. {value}")
 
-# Rope project settings
-.ropeproject
+opcion = int(input("Ingrese el número correspondiente al tipo de probeta: "))
+match(opcion):
+    case 1:
+        Lt = float(input("Ingrese la longitud total (Lt)"))
+        Lc = float(input("Ingrese la longitud calibrada (Lc)"))
+        w = float(input("Ingrese el ancho (w)"))
+        e = float(input("Ingrese el espesor (e)"))
+        Lcf = float(input("Ingrese la longitud calibrada final (Lcf)"))
+        ef = float(input("Ingrese el espesor final (ef)"))
+        wf = float(input("Ingrese el ancho final (wf)"))
+        a, af, ey, ez, eyr, ezr = Calculos(w, e, ef, wf)
+        DeforU = DeformacionUIn(Delta, Lt)
+        DeforUr = DeformacionUReal(DeforU)
+        Esf = EsfuerzoI(Fuerza, a)
+        Efr = EsfuerzoR(Esf, DeforU)
+        Ene = Energia(Efr, DeforUr)
+        Lm = LimA(DeforUr)
+        Dur_prev, Ef_prev, idc = Pearson(DeforU, Esf, Ene, Lm)
+        Young, b, R, Sigma = Modulo(Dur_prev, Ef_prev)
+        Res, Ten = Calculos_varios(Ene, idc)
+    case 2:
+        Dc = float(input("Ingrese el diametro calibrado inicial"))
+        Df = float(input("Ingrese el diametro calibrado final "))
+        Lt = float(input("Ingrese la longitud total (Lt)"))
+        Lc = float(input("Ingrese la longitud calibrada (Lc)"))
+        w = float(input("Ingrese el ancho (w)"))
+        e = float(input("Ingrese el espesor (e)"))
+        Lcf = float(input("Ingrese la longitud calibrada final (Lcf)"))
+        ef = float(input("Ingrese el espesor final (ef)"))
+        wf = float(input("Ingrese el ancho final (wf)"))
+        a, af, ey, ez, eyr, ezr = Calculoc(Dc,Df, e, ef, wf)
+        DeforU = DeformacionUIn(Delta, Lt)
+        DeforUr = DeformacionUReal(DeforU)
+        Esf = EsfuerzoI(Fuerza, a)
+        Efr = EsfuerzoR(Esf, DeforU)
+        Ene = Energia(Efr, DeforUr)
+        Lm = LimA(DeforUr)
+        Dur_prev, Ef_prev, idc = Pearson(DeforU, Esf, Ene, Lm)
+        Young, b, R, Sigma = Modulo(Dur_prev, Ef_prev)
+        Res, Ten = Calculos_varios(Ene, idc)
 
-# mkdocs documentation
-/site
+        pass
+    case 0:
+        pass
 
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
+print("a Area Inicial: {:.8f} mm^2".format(a))
+print("af Area Final: {:.8f} mm^2".format(af))
+print("Lt Longitud Total: {:.8f} mm".format(Lt))
+print("Lc Longitud Calibrada: {:.8f} mm".format(Lc))
+print("Lcf: Longitud Calibrada Final: {:.8f} mm".format(Lcf))
+print("w Ancho: {:.8f} mm".format(w))
+print("wf: Ancho Final: {:.8f} mm".format(wf))
+print("e Espesor: {:.8f} mm".format(e))
+print("ef: Espesor Final: {:.8f} mm".format(ef))
+print("ey: {:.8f} mm".format(ey))
+print("ez: {:.8f} mm".format(ez))
+print("eyr: {:.8f} mm".format(eyr))
+print("ezr: {:.8f} mm".format(ezr))
 
-# Pyre type checker
-.pyre/
+print("AJUSTE LINEAL")
+print("Modulo de Young (Obtenido con metodo de Minimos Cuadrados) {:.8f} MPa".format(Young))
+print("b (Obtenido con metodo de Minimos Cuadrados): {:.8f} ".format(b))
+print("R^2 (Obtenido con metodo de Pearson) : {:.8f}".format(R))
+print("Limite de Fluencia Re: {:.8f}".format(Lm))
+print("Resistencia a la traccion {:.8f} MPa".format(max(Efr)))
+print("Punto de rutura {:.8f} MPa".format(Efr[-1]))
+print("Resiliencia {:.8f} KJ/m^3".format(Res))
+print("Tenacidad {:.8f} MPa".format(Ten))
+print("Porcentaje de Elongacion {:.8f} %".format(((Lcf-Lc)/Lc)*100))
+print("Porcentaje de Estriccion {:.8f} %".format(((a-af)/a)*100))
 
-# pytype static type analyzer
-.pytype/
+plt.plot(DeforUr, Efr, label='Esfuerzo Real')
+plt.plot(DeforU, Esf, label='Esfuerzo Inicial')
 
-# Cython debug symbols
-cython_debug/
+max_index_real = Efr.index(max(Efr))
+plt.scatter(DeforUr[max_index_real], max(Efr), color='red', label='Punto Máximo E. Real')
+plt.text(DeforUr[max_index_real], max(Efr) + 500, f'Máximo E. Real: {max(Efr):.2f} MPa', fontsize=8)
 
-# PyCharm
-#   JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#   be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#   and can be added to the global gitignore or merged into this file.  For a more nuclear
-#   option (not recommended) you can uncomment the following to ignore the entire idea folder.
-# .idea/
+max_index_inicial = Esf.index(max(Esf))
+plt.scatter(DeforU[max_index_inicial], max(Esf), color='green', label='Punto Máximo E. Inicial')
+plt.text(DeforU[max_index_inicial], max(Esf) + 500, f'Máximo E. Inicial: {max(Esf):.2f} MPa', fontsize=8)
 
-# Abstra
-#   Abstra is an AI-powered process automation framework.
-#   Ignore directories containing user credentials, local state, and settings.
-#   Learn more at https://abstra.io/docs
-.abstra/
+plt.text(DeforUr[int(len(DeforUr)*0.7)], max(Efr) - 2000, f'Esfuerzo Real = {round(Young, 2)} * DeforU + {round(b, 2)}', fontsize=8)
 
-# Visual Studio Code
-#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
-#   that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#   and can be added to the global gitignore or merged into this file. However, if you prefer, 
-#   you could uncomment the following to ignore the entire vscode folder
-# .vscode/
-# Temporary file for partial code execution
-tempCodeRunnerFile.py
+plt.text(DeforU[int(len(DeforU)*0.7)], Esf[-1] + 500, f'Esfuerzo Inicial = {round(a, 2)} * DeforU + 0', fontsize=8)
 
-# Ruff stuff:
-.ruff_cache/
+plt.title("Curva Esfuerzo Deformación Unitaria")
+plt.legend()
+plt.grid(True)
+plt.show()
 
-# PyPI configuration file
-.pypirc
-
-# Marimo
-marimo/_static/
-marimo/_lsp/
-__marimo__/
-
-# Streamlit
-.streamlit/secrets.toml
+plt.plot(Dur_prev, Ef_prev, label='Datos Experimentales')
+m, b = np.polyfit(Dur_prev, Ef_prev, 1)
+plt.plot(Dur_prev, m * np.array(Dur_prev) + b, label=f'Ajuste Lineal: y = {m:.2f}x + {b:.2f}', color='red')
+plt.title("Ajuste Lineal")
+plt.legend()
+plt.grid(True)
+plt.show()
